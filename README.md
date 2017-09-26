@@ -35,3 +35,6 @@ The major problems that were found are:
 These can be improved by:
 1. Adapting a better performing map matching.
 2. Interactive effect on the each bar of the bar charts which highlights the corresponding route on the map.
+
+Image of the web map page
+https://user-images.githubusercontent.com/25848749/30858930-938b328c-a2b9-11e7-9da0-975623479857.png
