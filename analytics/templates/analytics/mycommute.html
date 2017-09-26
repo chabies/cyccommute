@@ -1,0 +1,224 @@
+<!--This is the map page where the user can access their visual analytics on the map and in the form of bar charts-->
+<!--This block extends the base.html-->
+
+{% extends 'analytics/base.html' %}<!--to extend the base.html block part to here-->
+{% block title %}My commute{% endblock %}
+
+<!--This is to load ajax.js file from static folder-->
+{% load static %}
+
+<!--to display the leaflet map in the admin on this page-->
+{% load leaflet_tags %}
+
+{% block head %}
+    <!--load leaflet javascript and css-->
+    {% leaflet_js %}
+    {% leaflet_css %}
+
+    <!--make change in size of the map-->
+    <style type="text/css">
+        #gis {width:100%;height:500px;}
+    </style>
+
+{% endblock %}
+
+{% block body %} <!--to place it it in body of base.html-->
+
+    <!--This is for creating a bar graph-->
+    <script type="text/javascript" src="{% static 'd3-3.2.2/d3.js' %}"></script>
+    <link rel="stylesheet" type="text/css" href="{% static 'barChart.css' %}">
+    <script type="text/javascript" src="{% static 'barChar.js' %}"></script>
+
+    <!--This is for styling the information box of segments-->
+    <link rel="stylesheet" type="text/css" href="{% static 'info.css' %}">
+
+    <!--This is the layout for the map and the charts in the web page-->
+    <div style = "width:75%; float:right;">{% leaflet_map "gis" callback="window.our_layers" %} <!--put the map in the body/the name of the map is gis/ callback runs the function out_layers in the map window/there should not be spaces between callback and =--></div>
+    <div style = "width:25%; float:left;">
+        <div style = "height:220px; float: top;" ><h5 align="center">Frequency of rides on route</h5>
+        <svg id="graph_route_counts"></svg>
+        </div>
+        <br>
+        <div style = "height:220px; float: bottom;"><h5 align="center">Average travel time for route (minute)</h5>
+        <svg id="graph_route_tt"></svg>
+        </div>
+    </div>
+
+    <!--import this jquery to use the getJSONAJAX.js-->
+    <script type="text/javascript" src="{% static 'jquery-3.2.1/jquery-3.2.1.js' %}"></script>
+    <script type="text/javascript" src="{% static 'getJSONAJAX.js' %}"> </script> <!--javascript for function to make a request for url and get the data from the view-->
+
+    <!--javascript to visualise the data from the json_data view-->
+    <script type="text/javascript">
+        //Receive data from json_data view
+        var jsonData = $.getValues("{%  url 'analytics:json_data' %}");
+        var layer_list = {}
+        //Load the leaflet map and draw matched segments(GeoJSON) and show the graphs of counts of segments and routes.
+        function our_layers(map, options) {
+            // Receive seg_counts and segments_geojson from the jsonData
+            var segmentCounts = jsonData['seg_counts']; //{"seg_id": #, ..., }
+            var segmentsGeoJSON = jsonData['segments_geojson']; // {"fileid":geojson, ..., }
+
+            //This is to draw the matching segments
+            for (var fileid in segmentsGeoJSON) {
+                var filelayername = fileid;
+                var a = JSON.parse(segmentsGeoJSON[fileid]);
+                var b;
+                b = L.geoJSON(a, {
+                    //varing line thinkness depending on the size of the counts
+                    style: function (feature) {
+                        for (key in segmentCounts) {
+                            if (key = feature.properties.pk) {
+                                return {color: feature.properties.route_color, weight: 2*segmentCounts[key], opacity: 0.5};
+                            }
+                        }
+                    },
+                    onEachFeature: function(feature, layer){
+                        //layer.bindPopup('segment id: ' + feature.properties.pk)
+                        //layer.bindTooltip('route_id: '+ key + '  ' + 'segment_id: ' + feature.properties.pk + '  ' + 'type_id: ' + feature.properties.class_field, { permanent: true, opacity:0.5, direction: 'left'});
+                        layer.on({
+                            mouseover: highlightFeature,
+                            mouseout: resetHighlight,
+                            click: zoomToFeature
+                        });
+                    }
+                });
+                layer_list[filelayername] = b
+            };
+            //console.log(layer_list);
+
+            //Custom Info Control
+            var info = L.control({position: 'topleft'});
+            info.onAdd = function (map) {
+                this._div = L.DomUtil.create('div', 'info'); // create a div with a class "info"
+                this.update();
+                return this._div;
+            };
+            // method that we will use to update the control based on feature properties passed
+            info.update = function (info) {
+                this._div.innerHTML = '<h4>Segment Info</h4>' +  (info ?
+                    '<b>' + 'segmentID: '+ info.info.segid + '<br>' + 'name: '+ info.info.name + '<br>' + 'number of used segments: ' + info.info.counts
+                    : 'Hover over a segment')
+            };
+            info.addTo(map);
+
+            //This is for showing the highlight effect on each segment when the mouse cursor is pointed to a segment.
+            //console.log(layer_list)
+            for (var f in layer_list) {
+                var geoj;
+
+                geoj = layer_list[f]
+                //console.log(geoj["features"])
+                geoj.addTo(map);
+            };
+
+            function highlightFeature(e) {
+                var layer = e.target;
+                layer.setStyle({
+                    weight: 5,
+                    color: '#00feff',
+                    dashArray: '',
+                    fillOpacity: 0.7
+                });
+
+                if (!L.Browser.ie && !L.Browser.opera && !L.Browser.edge) {
+                    layer.bringToFront();
+                }
+                
+                for (i in segmentCounts) { //{"seg_id": counts, ..., }
+                    if (layer.feature.properties.pk === i) {
+                        var counts = segmentCounts[i]
+                        var name = layer.feature.properties.name
+                        info.update({'info':{segid:i, name: name, counts:counts}});
+                    }
+                }
+            };
+
+            //This is to reset the feature style to the initial style which is in effect upon mouse out
+            function resetHighlight(e) {
+                        geoj.resetStyle(e.target);
+                        info.update();
+                    };
+
+            //This is to zoom in the double-clicked feature
+            function zoomToFeature(e) {
+                map.fitBounds(e.target.getBounds());
+            };
+
+            //This is to draw the raw GPS data
+            var geojsonMarkerOptions = {
+                radius: 3,
+                fillColor: "#0067ff",
+                color: "#000",
+                weight: 1,
+                opacity: 1,
+                fillOpacity: 0.5
+            };
+
+            //This is to draw the input GPS points on the map
+            var gpxpoint_dataset = jsonData["dataset"]
+            for (var key in gpxpoint_dataset) {
+                var f = gpxpoint_dataset[key]; //get the geojson data for the gpxfile with the current key.
+                var a = JSON.parse(f); //make the geojson data into the json data form.
+
+                //make a geojson layer with the geojson data and extract coordinates of each point to make a list of point coordinates.
+                var coordList = [];
+                var b = L.geoJSON(a, {
+                    pointToLayer: function (feature,latlng) {
+                        return L.circleMarker(latlng, geojsonMarkerOptions);
+                    },
+                    onEachFeature: function(feature, layer) {
+                        var coords = [];
+                        coords.push(feature.geometry.coordinates[1],feature.geometry.coordinates[0], feature.geometry.coordinates[2]);
+                        coordList.push(coords);
+
+                        layer.bindPopup('Activity: '+ feature.properties.gpxfile + '<br>' +'Time: '+feature.properties.timestamp.toString()); // make a popup on each point.
+                    }
+                })
+                //b.addTo(map);
+
+            };
+
+            //This is to draw the matching GPS points to the OSM network
+            var markerMatchingP = {
+                radius: 3,
+                fillColor: "#ff7800",
+                color: "#000",
+                weight: 1,
+                opacity: 1,
+                fillOpacity: 0.7
+            };
+            var matching_points = jsonData["matching_points_geojson"]
+            //console.log(matching_points)
+            for (var key in matching_points) {
+                var f = matching_points[key]; //get the geojson data for the gpxfile with the current key.
+                //console.log(f)
+                var a = JSON.parse(f); //make the geojson data into the json data form.
+                //console.log(a)
+                var b = L.geoJSON(a,{
+                    pointToLayer: function (feature,latlng) {
+                        return L.circleMarker(latlng, markerMatchingP);
+                    }});
+                //console.log(b)
+                //b.addTo(map);
+            };
+
+        }
+
+        //Make the graph for route counts
+        var routeData = jsonData['route_data']; // {"route_id": {route_color:route_color, counts:#}, ...,}
+        var routeCounts = []; //object [{"x":seg_id, "y":#}, ..., ]
+        var routeTT = []
+        var routeColor = [];
+        for (var key in routeData) { //key is segment_id
+            routeCounts.push({x:key, y:routeData[key]["counts"]});
+            routeTT.push({x:key, y:routeData[key]["route_tt"]});
+            routeColor.push(routeData[key]["route_color"])
+        };
+        //console.log(routeCounts.length)
+        //console.log(routeTT)
+        //console.log(routeColor)
+        InitChart(routeCounts, '#graph_route_counts', 300, 150, routeColor.valueOf(), layer_list); //InitChart(data, svg_id, width_num, height_num)
+        InitChart(routeTT, '#graph_route_tt', 300, 150, routeColor.valueOf(), layer_list); //InitChart(data, svg_id, width_num, height_num)
+    </script>
+{% endblock %}

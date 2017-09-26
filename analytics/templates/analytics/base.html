@@ -1,0 +1,72 @@
+<!--This file is to base structure of the web site-->
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+{% block head %}{% endblock %}
+
+    <meta charset="UTF-8">
+    <title>{% block title %}Cyccommute{% endblock %}</title>
+
+    <!-- Loads the path to your static files -->
+    {%  load staticfiles %}
+    <link rel="stylesheet" href = "https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" /> <!--pull a bootstrap-->
+    <link rel="stylesheet" type = "text/css" href="{% static 'style.css' %}" /> <!--load the static files(css)/also tweak the bootstrap so this line is after the bootstrap-->
+    <link href="https://fonts.googleapis.com/css?family=Satisfy" rel="stylesheet" type="text/css" /> <!--pull the Google font-->
+    <!--pull jquery and bootstrap javascript files to use functionality like adjustment to the size of the browser-->
+    <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.12.0/jquery.min.js"></script>
+    <script src="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js"></script>
+
+    <!-- build a navigation bar on the top of the screen using bootstrap-->
+</head>
+<body>
+    <nav class="navbar navbar-inverse"> <!--color: inverse(black)-->
+        <div class="container-fluid"> <!--the nav bar at the top of the screen-->
+
+            <!--Header: links back to the home-->
+            <div class="navbar-header"> <!--for a home button at the first section of the bar-->
+                <!--add menu button which appears when there is not enough space in the screen-->
+                <button type ="button" class="navbar-toggle" data-toggle="collapse" data-target="#topNavBar"> <!--search for id(#topNavBar, named as you like) and make the items inside of the menu-->
+                    <span class="icon-bar"></span> <!--add 3 bars for the menu button-->
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                </button>
+                <a class="navbar-brand" href="{% url 'analytics:main' %}"> Cyccommute</a> <!--icon to link back to the homepage-->
+            </div>
+
+            <!--Manu-->
+            <div class="collapse navbar-collapse" id="topNavBar"> <!--make it collapsible on the smaller space/ this button will go inside of the #topNavBar button-->
+                <!--Manu on the left end-->
+                <ul class="nav navbar-nav">
+                    <li class="active">
+                        <a href = "{% url 'analytics:mycommute' %}">
+                            <span class="glyphicon glyphicon-cd" aria-hidden="true"></span>&nbsp;My commute
+                        </a>
+                    </li>
+                </ul>
+
+                 <!--Manu on the right end-->
+                <ul class="nav navbar-nav navbar-right"> <!--to make sure this is on the right side of the navigation bar-->
+                    <!--make add album button-->
+                    <li class="active">
+                        <a href = "{% url 'analytics:process_gpsdata' %}"> <!--put url to link to the input form according to url in urls.py-->
+                            <span class="glyphicon glyphicon-plus" aria-hidden="true"></span>&nbsp;Add route
+                        </a>
+                    </li>
+                    <!--make logout button-->
+                    <li class="active">
+                        <a href = "{% url 'analytics:logout_user' %}">
+                            <span class="glyphicon glyphicon-off" aria-hidden="true"></span>&nbsp;Logout
+                        </a>
+                    </li>
+
+                    <li class="{% block register_active %}{% endblock %}"><a href="{% url 'analytics:register' %}">Register</a></li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+{% block body %}
+{% endblock %}
+</body>
+</html>

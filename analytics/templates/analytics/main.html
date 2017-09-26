@@ -1,0 +1,15 @@
+<!--This is the main page where the user can see their uploaded files-->
+<!--This block extends the base.html-->
+
+{% extends 'analytics/base.html' %} <!--to extend the base.html block part to here-->
+{% block title %}Cyccommute{% endblock %}
+
+{% block body %} <!--to place it it in body of base.html-->
+    <h3>&nbspUploaded file list</h3>
+    {% if files %}
+        {% for file in files %}
+            <h3>&nbsp{{ file.filename }}</h3>
+        {% endfor %}
+    {% endif %}
+
+{% endblock %}

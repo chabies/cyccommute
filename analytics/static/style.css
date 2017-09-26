@@ -1,0 +1,14 @@
+/*This script is for styling the web site*/
+
+body{
+    background: white
+}
+
+.navbar{
+    border-radius: 0;
+}
+
+/* make the home button(navbar-brand class) have the Satisfy font from Google Font*/
+.navbar-brand{
+    font-family: 'Satisfy', cursive; /* cursive is a backup font */
+}

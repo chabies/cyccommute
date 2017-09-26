@@ -1,0 +1,29 @@
+<!--This is the sign up page for visitors-->
+<!--This block extends the base_visitor.html-->
+
+{% extends 'analytics/base.html' %}
+{% block title %}Registration{% endblock %} <!--when this page is open, the title changes to this one/ this is referenced by the title of base.html-->
+
+{% block body %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-sm-12 col-md-7">
+            <div class="panel panel-default">
+                <div class="panel-body">
+                    <h3>Create a New Account</h3>
+                    <!--form is placed here-->
+                    <form class="form-horizontal" action="" method="post" enctype="multipart/form-data"> <!--action: redirect to the same view/enctype:for file upload-->
+                        {%  csrf_token %} <!--common security process-->
+                        {%  include 'analytics/form-template.html' %} <!--use a form template for input form/ This is not to repeat coding/put label on the right and input fields on the left-->
+                        <div class="form-group"> <!--put a submit button-->
+                            <div class="col-sm-offset-2 col-sm-10"> <!--not to take up the first 2 areas where labels are placed/bootstrap should take up 10 columns-->
+                                <button type="submit" class="btn btn-success">Sumbit</button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{%  endblock %}
