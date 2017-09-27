@@ -4,7 +4,7 @@ a web platform for visual analytics of individual commuter cyclists data
 This project was initiated as a work for a Master's disseration of BCHA in MSc GIS in University College London.
 The completion date of the current version is 13th September, 2017.
 
-The web platform visualises riding frequecy of certain OSM (OpenStreetMap) road segments and routes and traveltimes of routes which are computated from user-uploaded GPS log files (gpx and/or tcx files).
+The web platform visualises riding frequecy of OSM (OpenStreetMap) road segments and routes and traveltimes of routes which are calculated from user-uploaded GPS log files (gpx and/or tcx files).
 
 In order to test the web platform, the following steps should be done:
 
